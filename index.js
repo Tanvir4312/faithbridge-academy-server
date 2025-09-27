@@ -63,6 +63,7 @@ const sendEmail = (emailAddress, emailData) => {
 };
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h2tkvzo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -329,6 +330,317 @@ async function run() {
       res.send(result);
     });
 
+    //-------------------------------Users Related------------------------
+    // Get Users for admin
+    app.get("/all-user", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+    // Get Users search for admin
+    app.get("/users-search", async (req, res) => {
+      const search = req.query.search || "";
+      let query = {
+        $or: [
+          {
+            email: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            role: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ],
+      };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Update and make a teacher role
+    app.patch("/make-teacher/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const update = await usersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            role: "teacher",
+          },
+        }
+      );
+      res.send(update);
+    });
+
+    // Delete User By specific id
+    app.delete("/user-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await usersCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // ------------------------------Pagination------------------------------------
+    //Users Count
+    app.get("/users-data-count", async (req, res) => {
+      const count = await usersCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
+
+    // Students Info Data count
+    app.get("/students-data-count", async (req, res) => {
+      const count =
+        await studentsApplyInformationCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
+    // Students Info Data count
+    app.get("/form-fillUp-data-count", async (req, res) => {
+      const count = await formFillUpInfoCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
+
+    // Pagination
+    app.get("/data-pagination", async (req, res) => {
+      const page = Number(req.query.page);
+      const size = Number(req.query.size);
+      const text = req.query.type;
+      console.log(text);
+      let result;
+      if (text === "studentsPagination") {
+        result = await studentsApplyInformationCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else if (text === "formDataPagination") {
+        result = await formFillUpInfoCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else {
+        result = await usersCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      }
+
+      res.send(result);
+    });
+
+    // // ---------------Students Info Related-----------------------
+    app.get("/all-student-info", async (req, res) => {
+      const result = await studentsApplyInformationCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Update When Admin accept or Reject
+    app.patch("/update-student-data/:id", async (req, res) => {
+      const id = req.params.id;
+      const { text } = req.body;
+
+      const studentInfo = await studentsApplyInformationCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!studentInfo) {
+        return res.status(404).send({ message: "Student info not found" });
+      }
+      const email = studentInfo.email;
+      const user = await usersCollection.findOne({ email });
+      if (!user) {
+        return res.status(404).send({ message: "User not found" });
+      }
+
+      let updateStudentInfo;
+      let updateUserRole;
+
+      if (text === "exam") {
+        updateStudentInfo = await studentsApplyInformationCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              status_exam: "verified",
+            },
+          }
+        );
+      } else if (text === "accept") {
+        updateStudentInfo = await studentsApplyInformationCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              status: "verified",
+            },
+          }
+        );
+
+        updateUserRole = await usersCollection.updateOne(
+          { email },
+          {
+            $set: {
+              role: "student",
+            },
+          }
+        );
+      } else if (text === "reject") {
+        updateStudentInfo = await studentsApplyInformationCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              status: "rejected",
+            },
+          }
+        );
+      }
+
+      res.send({ updateStudentInfo, updateUserRole });
+    });
+
+    // Search payment Status
+    app.get("/student-payment-info", async (req, res) => {
+      const search = req.query.search;
+      const query = {
+        payment_status: {
+          $regex: search,
+          $options: "i",
+        },
+      };
+      const result = await studentsApplyInformationCollection
+        .find(query)
+        .toArray();
+      res.send(result);
+    });
+
+    // Search by Admin
+    app.get("/student-info", async (req, res) => {
+      const search = req.query.search;
+
+      let query = {
+        $or: [
+          {
+            registration_no: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            status: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            email: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            status_exam: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ],
+      };
+      const result = await studentsApplyInformationCollection
+        .find(query)
+        .toArray();
+      res.send(result);
+    });
+
+    // // Delete Student By specific id
+    app.delete("/student-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await studentsApplyInformationCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // ---------------Form Fill Up Info Related-----------------------
+    //  Get Form Fill Up Data for Admin
+    app.get("/formFill-up-info", async (req, res) => {
+      const result = await formFillUpInfoCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Update Data when admin accept
+    app.patch("/formFill-up-data/:id", async (req, res) => {
+      const id = req.params.id;
+      const update = await formFillUpInfoCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status: "verified",
+          },
+        }
+      );
+      res.send(update);
+    });
+
+    // Delete User By specific id
+    app.delete("/formFill-up-data-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await formFillUpInfoCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // Search
+    app.get("/formFill-up-info-data", async (req, res) => {
+      const search = req.query.search || "";
+
+      let query = {};
+
+      if (search) {
+        query = {
+          $or: [
+            {
+              registration_no: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              payment: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              status: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              name_en: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        };
+      }
+
+      const result = await formFillUpInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // ------------------------------------------------Admin End-------------------------------------------------
 
     // ----------------------Apply Time Start------------------------------
@@ -546,6 +858,15 @@ async function run() {
       const email = req.params.email;
       const formFillUpData = await formFillUpInfoCollection.findOne({ email });
       res.send(formFillUpData);
+    });
+
+    // Admit Card--------
+    app.get("/admit-card-info/:id", async (req, res) => {
+      const id = req.params.id;
+      const admitCardData = await formFillUpInfoCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(admitCardData);
     });
 
     // ----------------------------------Form FillUp End----------------------------------
