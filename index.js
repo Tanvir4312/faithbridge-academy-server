@@ -410,13 +410,25 @@ async function run() {
 
       res.send({ count });
     });
+    // Payments Data count
+    app.get("/payments-data-count", async (req, res) => {
+      const count = await paymentCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
+    // Transcripts Data count
+    app.get("/transcripts-data-count", async (req, res) => {
+      const count = await transcriptApplyCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
 
     // Pagination
     app.get("/data-pagination", async (req, res) => {
       const page = Number(req.query.page);
       const size = Number(req.query.size);
       const text = req.query.type;
-      console.log(text);
+
       let result;
       if (text === "studentsPagination") {
         result = await studentsApplyInformationCollection
@@ -426,6 +438,18 @@ async function run() {
           .toArray();
       } else if (text === "formDataPagination") {
         result = await formFillUpInfoCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else if (text === "paymentsData") {
+        result = await paymentCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else if (text === "transcriptsData") {
+        result = await transcriptApplyCollection
           .find()
           .skip(page * size)
           .limit(size)
@@ -638,6 +662,154 @@ async function run() {
       }
 
       const result = await formFillUpInfoCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Form fillUp Time
+    app.patch("/form-time", async (req, res) => {
+      const form_time = req.body;
+      const update = await form_fill_up_timerCollection.updateOne(
+        { _id: 1 },
+        {
+          $set: form_time,
+        }
+      );
+      res.send(update);
+    });
+
+    // Application Time Control
+    app.patch("/application-time", async (req, res) => {
+      const application_time = req.body;
+      const update = await timerCollection.updateOne(
+        { _id: 1 },
+        {
+          $set: application_time,
+        }
+      );
+      res.send(update);
+    });
+
+    // Payments
+    app.get("/all-payment-admin", async (req, res) => {
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Payment-search
+    app.get("/payments-search", async (req, res) => {
+      const search = req.query.search;
+      let query;
+
+      if (search) {
+        query = {
+          $or: [
+            {
+              transactionId: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              paymentType: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        };
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Payments Data Delete
+    app.delete("/payments-data-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await paymentCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // Transcript------------------------------
+    app.get("/all-transcript-get-admin", async (req, res) => {
+      const result = await transcriptApplyCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Transcript Delete--------
+    app.delete("/transcripts-data-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await transcriptApplyCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+    // Transcript Data Update--------
+    app.patch("/transcripts-data-update/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await transcriptApplyCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        {
+          $set: {
+            status: "verified",
+          },
+        }
+      );
+      res.send(result);
+    });
+
+    // Transcript Data Search
+    app.get("/transcripts-data-search", async (req, res) => {
+      const search = req.query.search;
+
+      let query;
+      if (search) {
+        query = {
+          $or: [
+            {
+              registration_no: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              status: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              type: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              email: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              transactionId: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        };
+      }
+      const result = await transcriptApplyCollection.find(query).toArray();
       res.send(result);
     });
 
