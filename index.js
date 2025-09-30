@@ -422,6 +422,18 @@ async function run() {
 
       res.send({ count });
     });
+    // Testimonials Data count
+    app.get("/testimonials-data-count", async (req, res) => {
+      const count = await testimonialApplyCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
+    // Testimonials Data count
+    app.get("/certificates-data-count", async (req, res) => {
+      const count = await certificateApplyCollection.estimatedDocumentCount();
+
+      res.send({ count });
+    });
 
     // Pagination
     app.get("/data-pagination", async (req, res) => {
@@ -450,6 +462,18 @@ async function run() {
           .toArray();
       } else if (text === "transcriptsData") {
         result = await transcriptApplyCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else if (text === "testimonialsData") {
+        result = await testimonialApplyCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else if (text === "certificatesData") {
+        result = await certificateApplyCollection
           .find()
           .skip(page * size)
           .limit(size)
@@ -738,33 +762,82 @@ async function run() {
       res.send(result);
     });
 
-    // Transcript------------------------------
-    app.get("/all-transcript-get-admin", async (req, res) => {
-      const result = await transcriptApplyCollection.find().toArray();
+    // All Academic Doc Data get------------------------------
+    app.get("/academic-docs-get-admin", async (req, res) => {
+      const text = req.query.text;
+      let result;
+      if (text === "testimonial") {
+        result = await testimonialApplyCollection.find().toArray();
+      } else if (text === "certificates") {
+        result = await certificateApplyCollection.find().toArray();
+      } else {
+        result = await transcriptApplyCollection.find().toArray();
+      }
+
       res.send(result);
     });
 
-    // Transcript Delete--------
-    app.delete("/transcripts-data-delete/:id", async (req, res) => {
+    // Delete--------
+    app.delete("/academic-docs-delete/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await transcriptApplyCollection.deleteOne({
-        _id: new ObjectId(id),
-      });
+      const text = req.query.text;
+      let result;
+      if (text === "testimonial") {
+        result = await testimonialApplyCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+      } else if (text === "certificates") {
+        result = await certificateApplyCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+      } else {
+        result = await transcriptApplyCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+      }
+
       res.send(result);
     });
-    // Transcript Data Update--------
-    app.patch("/transcripts-data-update/:id", async (req, res) => {
+    // Update--------
+    app.patch("/academic-docs-update/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await transcriptApplyCollection.updateOne(
-        {
-          _id: new ObjectId(id),
-        },
-        {
-          $set: {
-            status: "verified",
+      const text = req.query.text;
+      let result;
+      if (text === "testimonial") {
+        result = await testimonialApplyCollection.updateOne(
+          {
+            _id: new ObjectId(id),
           },
-        }
-      );
+          {
+            $set: {
+              status: "verified",
+            },
+          }
+        );
+      } else if (text === "certificates") {
+        result = await certificateApplyCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "verified",
+            },
+          }
+        );
+      } else {
+        result = await transcriptApplyCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "verified",
+            },
+          }
+        );
+      }
+
       res.send(result);
     });
 
@@ -810,6 +883,94 @@ async function run() {
         };
       }
       const result = await transcriptApplyCollection.find(query).toArray();
+      res.send(result);
+    });
+    // Testimonial Data Search
+    app.get("/testimonial-data-search", async (req, res) => {
+      const search = req.query.search;
+
+      let query;
+      if (search) {
+        query = {
+          $or: [
+            {
+              registration_no: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              status: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              type: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              email: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              transactionId: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        };
+      }
+      const result = await testimonialApplyCollection.find(query).toArray();
+      res.send(result);
+    });
+    // Certificate Data Search
+    app.get("/certificate-data-search", async (req, res) => {
+      const search = req.query.search;
+
+      let query;
+      if (search) {
+        query = {
+          $or: [
+            {
+              registration_no: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              status: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              type: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              email: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              transactionId: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        };
+      }
+      const result = await certificateApplyCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -1076,6 +1237,15 @@ async function run() {
     app.get("/certificate-data/:email", async (req, res) => {
       const email = req.params.email;
       const result = await certificateApplyCollection.find({ email }).toArray();
+      res.send(result);
+    });
+
+    // Certificate apply Copy
+    app.get("/certificate-apply-copy/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await certificateApplyCollection.findOne({
+        _id: new ObjectId(id),
+      });
       res.send(result);
     });
     //-----------------------------------Apply For Documents End--------------------------
