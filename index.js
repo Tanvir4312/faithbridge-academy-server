@@ -129,6 +129,10 @@ async function run() {
     const contact_number_Collection = client
       .db("faithBridge-school")
       .collection("contact-number-Collection");
+    // ------Announcements------------------
+    const announcements_collection = client
+      .db("faithBridge-school")
+      .collection("announcements-collection");
 
     // --------------------------Collection End---------------------------
 
@@ -971,6 +975,44 @@ async function run() {
         };
       }
       const result = await certificateApplyCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Announcement-------------------
+    // Add
+    app.post("/add-announcements", async (req, res) => {
+      const announcements = req.body;
+      const text = req.query.text;
+      let result;
+      if (text) {
+        result = await announcements_collection.insertOne(announcements);
+      } else {
+        result = await announcements_collection.insertOne(announcements);
+      }
+
+      res.send(result);
+    });
+    // View
+    app.get("/view-announcements", async (req, res) => {
+      const result = await announcements_collection.find().toArray();
+
+      res.send(result);
+    });
+
+      // Get Announcement by specific Id
+    app.get("/get-announcements/:id", async (req, res) => {
+      const id = req.params.id
+      const result = await announcements_collection.findOne({_id: new ObjectId(id)});
+
+      res.send(result);
+    });
+
+    // Delete
+    app.delete("/announcements-data-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await announcements_collection.deleteOne({
+        _id: new ObjectId(id),
+      });
       res.send(result);
     });
 
