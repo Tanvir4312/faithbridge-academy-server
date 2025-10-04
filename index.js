@@ -133,6 +133,10 @@ async function run() {
     const announcements_collection = client
       .db("faithBridge-school")
       .collection("announcements-collection");
+    // ------Routine------------------
+    const routine_data_collection = client
+      .db("faithBridge-school")
+      .collection("routine-data-collection");
 
     // --------------------------Collection End---------------------------
 
@@ -999,10 +1003,12 @@ async function run() {
       res.send(result);
     });
 
-      // Get Announcement by specific Id
+    // Get Announcement by specific Id
     app.get("/get-announcements/:id", async (req, res) => {
-      const id = req.params.id
-      const result = await announcements_collection.findOne({_id: new ObjectId(id)});
+      const id = req.params.id;
+      const result = await announcements_collection.findOne({
+        _id: new ObjectId(id),
+      });
 
       res.send(result);
     });
@@ -1016,6 +1022,45 @@ async function run() {
       res.send(result);
     });
 
+    // Routine------------------------
+    // Add
+    app.post("/add-routine", async (req, res) => {
+      const routineData = req.body;
+      const result = await routine_data_collection.insertOne(routineData);
+      res.send(result);
+    });
+
+    // Get
+    app.get("/get-routine", async (req, res) => {
+      const result = await routine_data_collection.find().toArray();
+      res.send(result);
+    });
+    // Get
+    app.get("/routine-get/:id", async (req, res) => {
+      const id = req.params.id
+      const result = await routine_data_collection.findOne({_id: new ObjectId(id)});
+      res.send(result);
+    });
+
+    // Update
+    app.patch("/update-routine/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateData = req.body;
+      const update = await routine_data_collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+      res.send(update);
+    });
+
+    // Delete
+    app.delete("/routine-data-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await routine_data_collection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
     // ------------------------------------------------Admin End-------------------------------------------------
 
     // ----------------------Apply Time Start------------------------------
