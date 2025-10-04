@@ -137,6 +137,9 @@ async function run() {
     const routine_data_collection = client
       .db("faithBridge-school")
       .collection("routine-data-collection");
+    const all_contact_number_collection = client
+      .db("faithBridge-school")
+      .collection("all-contact-number-Collection");
 
     // --------------------------Collection End---------------------------
 
@@ -1035,10 +1038,12 @@ async function run() {
       const result = await routine_data_collection.find().toArray();
       res.send(result);
     });
-    // Get
+    // Get Data by specific id for Update
     app.get("/routine-get/:id", async (req, res) => {
-      const id = req.params.id
-      const result = await routine_data_collection.findOne({_id: new ObjectId(id)});
+      const id = req.params.id;
+      const result = await routine_data_collection.findOne({
+        _id: new ObjectId(id),
+      });
       res.send(result);
     });
 
@@ -1057,6 +1062,30 @@ async function run() {
     app.delete("/routine-data-delete/:id", async (req, res) => {
       const id = req.params.id;
       const result = await routine_data_collection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // All Contact Number------------------------
+    // Add
+    app.post("/add-all-contact-number", async (req, res) => {
+      const contact_number_data = req.body;
+      const result = await all_contact_number_collection.insertOne(
+        contact_number_data
+      );
+      res.send(result);
+    });
+    // Get
+    app.get("/add-all-contact-number-get", async (req, res) => {
+      const result = await all_contact_number_collection.find().toArray();
+      res.send(result);
+    });
+
+    // Delete
+    app.delete("/contact-number-delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await all_contact_number_collection.deleteOne({
         _id: new ObjectId(id),
       });
       res.send(result);
