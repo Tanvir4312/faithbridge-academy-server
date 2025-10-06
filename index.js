@@ -531,7 +531,7 @@ async function run() {
           { _id: new ObjectId(id) },
           {
             $set: {
-              status_exam: "verified",
+              status_exam: "yes",
             },
           }
         );
@@ -1266,6 +1266,15 @@ async function run() {
 
       const result = await studentsApplyInformationCollection.findOne({
         email,
+      });
+      res.send(result);
+    });
+    // Get student information by specific Id
+    app.get("/student-information-get/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const result = await studentsApplyInformationCollection.findOne({
+        _id: new ObjectId(id),
       });
       res.send(result);
     });
