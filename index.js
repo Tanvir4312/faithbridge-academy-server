@@ -6,16 +6,6 @@ const app = express();
 const port = process.env.PORT || 5000;
 const nodemailer = require("nodemailer");
 
-// Store ID: faith68a5d8d3a3093
-// Store Password (API/Secret Key): faith68a5d8d3a3093@ssl
-
-// Merchant Panel URL: https://sandbox.sslcommerz.com/manage/ (Credential as you inputted in the time of registration)
-
-// Store name: testfaithevqj
-// Registered URL: www.faithbridgeacademy.com
-// Session API to generate transaction: https://sandbox.sslcommerz.com/gwprocess/v3/api.php
-// Validation API: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?wsdl
-// Validation API (Web Service) name: https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php
 
 // middleware
 app.use(cors());
@@ -1388,11 +1378,11 @@ async function run() {
         store_passwd: "faith68a5d8d3a3093@ssl",
         total_amount: paymentInfo.amount,
         currency: "BDT",
-        tran_id: trxId, // use unique tran_id for each api call
-        success_url: "http://localhost:5000/success-payment",
-        fail_url: "http://localhost:5173/fail",
-        cancel_url: "http://localhost:5173/cancel",
-        ipn_url: "http://localhost:5000/ipn-success-payment",
+        tran_id: trxId, // use unique tran_id for each api call 
+        success_url: "https://faithbridge-academy.web.app/success-payment",
+        fail_url: "https://server-zeta-cyan.vercel.app/fail",
+        cancel_url: "https://server-zeta-cyan.vercel.app/cancel",
+        ipn_url: "https://faithbridge-academy.web.app/ipn-success-payment",
         shipping_method: "Courier",
         product_name: "Computer.",
         product_category: "Electronic",
@@ -1480,7 +1470,7 @@ async function run() {
         }
         // Send transactionId back to client
         res.redirect(
-          `http://localhost:5173/success-payment?transactionId=${data.tran_id}`
+          `https://faithbridge-academy.web.app/success-payment?transactionId=${data.tran_id}`
         );
       } catch (err) {
         res.status(500).send({ success: false, message: "Server error" });
@@ -1490,12 +1480,12 @@ async function run() {
     // ------------------------------Apply Payment End---------------------------------
 
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
